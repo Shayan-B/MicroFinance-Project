@@ -14,6 +14,7 @@ In recent years, data science has emerged as a powerful tool to enhance the effi
 
 ## About
 This repository is an analysis on a dataset provided on kaggle website on this [link](https://www.kaggle.com/datasets/youngdaniel/loan-dataset/data). The aim of the provided notebook and codes are to find the probability of a delayed payment based on the provided data for each loan applicant.
+If you have any difficulties openning the notebook in github you can find it in [KAGGLE](https://www.kaggle.com/code/shayanb2004/microfinance-notebook/notebook)
 
 ## License
 This repository is licensed under the [MIT License](LICENSE). Feel free to use and modify the contents for educational and non-commercial purposes, with appropriate attribution.
