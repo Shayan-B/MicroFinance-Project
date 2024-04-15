@@ -51,7 +51,7 @@ def ChangeType(df: pd.DataFrame, org_type: str, target_type: str) -> pd.DataFram
             The target type to change.
 
     Returns:
-        Pandas DataFrame with change types.
+        Pandas DataFrame with changed types.
     """
     selected_cols = df.select_dtypes(org_type).columns
     df.loc[:, selected_cols] = df.loc[:, selected_cols].astype(target_type)
@@ -59,6 +59,7 @@ def ChangeType(df: pd.DataFrame, org_type: str, target_type: str) -> pd.DataFram
 
 
 def plot_car_histogram(df: pd.DataFrame, str_value: str):
+    """Plot the histogram of 'OWN_CAR_AGE'."""
     ax = df["OWN_CAR_AGE"].plot(kind="hist", bins=150)
     ax.set_title(f"Distribution of OWN_CAR_AGE {str_value} filling NA values")
     plt.show()
@@ -81,7 +82,7 @@ def select_numerical_variables(df: pd.DataFrame) -> pd.DataFrame:
     numerical_df = df.select_dtypes(numerical_dtypes)
     numerical_columns = numerical_df.columns
 
-    print("Numerical columns are:", numerical_columns.tolist())
+    print("Numerical columns are: \n", numerical_columns.tolist(), "\n")
 
     return numerical_df
 
@@ -143,4 +144,19 @@ def compute_entire_correlation(df: pd.DataFrame, threshold: float = 0.7):
     total_correlation_names = pd.DataFrame(total_list)
     print("The final Variables which has higher than threshold correlation are as table below: \n", total_correlation_names)
     
+    return
+
+def compute_corr_hist_plot(df: pd.DataFrame, col_list: list):
+    """Plot pair wise and show the correlation matrix for specified columns.
+    
+    Args:
+        df:
+            The main DataFrame.
+        col_list:
+            List of columns to show the pair plot and compute correlation.
+    """
+    sns.pairplot(df[col_list])
+    plt.show()
+    print(f"Correlation between {len(col_list)} variables: \n", df[col_list].corr())
+
     return
