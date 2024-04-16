@@ -1,3 +1,5 @@
+import os
+
 import numpy as np  # linear algebra
 import pandas as pd  # data processing, CSV file I/O (e.g. pd.read_csv)
 
@@ -20,7 +22,8 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.impute import SimpleImputer
 
-import os
+from scipy import stats
+
 
 os.chdir("../")
 
@@ -190,3 +193,34 @@ def find_outliers(
         ]
 
     return outliers, Q1, Q3
+
+
+def compute_transform_zscore(data_df: pd.DataFrame, col_name: str):
+    data_df[f"{col_name}_LOG"] = np.log(data_df[f"{col_name}"])
+    data_df[f"{col_name}_ZS"] = stats.zscore(data_df[f"{col_name}_LOG"])
+
+    # Define COnditions for zscore filtering
+    zscore_condition_upper = data_df[f"{col_name}_ZS"] <= 3
+    zscore_condition_lower = data_df[f"{col_name}_ZS"] >= -3
+
+    # Find the relative Log values to zscores
+    zscore_thresh_upper = (
+        data_df.loc[zscore_condition_upper, :]
+        .sort_values(by=[f"{col_name}_ZS"], ascending=False)
+        .iloc[1, :][f"{col_name}_LOG"]
+    )
+    zscore_thresh_lower = (
+        data_df.loc[zscore_condition_lower, :]
+        .sort_values(by=[f"{col_name}_ZS"], ascending=True)
+        .iloc[1, :][f"{col_name}_LOG"]
+    )
+
+    # Define condition to replace extreme values
+    replace_condition_upper = data_df[f"{col_name}_LOG"] > zscore_thresh_upper
+    replace_condition_lower = data_df[f"{col_name}_LOG"] < zscore_thresh_lower
+
+    # Replace the values
+    data_df.loc[replace_condition_upper, f"{col_name}_LOG"] = zscore_thresh_upper
+    data_df.loc[replace_condition_lower, f"{col_name}_LOG"] = zscore_thresh_lower
+
+    return data_df, zscore_thresh_lower, zscore_thresh_upper
