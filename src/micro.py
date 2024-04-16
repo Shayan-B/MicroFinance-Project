@@ -224,3 +224,19 @@ def compute_transform_zscore(data_df: pd.DataFrame, col_name: str):
     data_df.loc[replace_condition_lower, f"{col_name}_LOG"] = zscore_thresh_lower
 
     return data_df, zscore_thresh_lower, zscore_thresh_upper
+
+def substitute_yn_values(data_df: pd.DataFrame, col_names: list) -> pd.DataFrame:
+    """Substitue the specified column Y, N values with 1,0
+    
+    Args:
+        data_df:
+            Main DataFrame containing the 'Y' and 'N' values.
+        col_names:
+            The name of columns which has 'Y', 'N' values.
+
+    Returns:
+        Main DataFrame with 'Y', 'N' values sibstitute for 1 and 0.
+    """
+    for col in col_names:
+        data_df[col] = data_df[col].replace({"Y": 1, "N": 0})
+    return data_df
