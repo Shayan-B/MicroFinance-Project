@@ -89,11 +89,11 @@ def select_numerical_variables(df: pd.DataFrame) -> pd.DataFrame:
 
 def compute_triu_corr_df(corr_matrix: pd.DataFrame) -> pd.DataFrame:
     """Compute the Upper triangle of the correlation DataFrame.
-    
+
     Args:
         corr_matrix:
             correlation DataFrame.
-    
+
     Returns:
         A DataFrame containing the upper triangle values of correlation matrix,
         the lower triangle matrix is filled with NA values.
@@ -142,13 +142,17 @@ def compute_entire_correlation(df: pd.DataFrame, threshold: float = 0.7):
             total_list.append(name_list)
 
     total_correlation_names = pd.DataFrame(total_list)
-    print("The final Variables which has higher than threshold correlation are as table below: \n", total_correlation_names)
-    
+    print(
+        "The final Variables which has higher than threshold correlation are as table below: \n",
+        total_correlation_names,
+    )
+
     return
+
 
 def compute_corr_hist_plot(df: pd.DataFrame, col_list: list):
     """Plot pair wise and show the correlation matrix for specified columns.
-    
+
     Args:
         df:
             The main DataFrame.
@@ -160,3 +164,29 @@ def compute_corr_hist_plot(df: pd.DataFrame, col_list: list):
     print(f"Correlation between {len(col_list)} variables: \n", df[col_list].corr())
 
     return
+
+
+def find_outliers(
+    data_df: pd.DataFrame, col_name: str, outlier_type: str = None
+) -> pd.DataFrame:
+    """Find the outliers based on InterQuartile Range."""
+    # Finding Quantiles
+    Q1 = data_df[col_name].quantile(0.25)
+    Q3 = data_df[col_name].quantile(0.75)
+    IQR = Q3 - Q1
+
+    # Define the boundaries
+    lower_bound = Q1 - 1.5 * IQR
+    upper_bound = Q3 + 1.5 * IQR
+
+    # Find outliers
+    if outlier_type == "upper":
+        outliers = data_df[(data_df[col_name] > upper_bound)]
+    elif outlier_type == "lower":
+        outliers = data_df[(data_df[col_name] < lower_bound)]
+    else:
+        outliers = data_df[
+            (data_df[col_name] < lower_bound) | (data_df[col_name] > upper_bound)
+        ]
+
+    return outliers, Q1, Q3
