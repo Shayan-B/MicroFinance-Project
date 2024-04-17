@@ -1,4 +1,5 @@
 import os
+import re
 
 import numpy as np  # linear algebra
 import pandas as pd  # data processing, CSV file I/O (e.g. pd.read_csv)
@@ -225,9 +226,10 @@ def compute_transform_zscore(data_df: pd.DataFrame, col_name: str):
 
     return data_df, zscore_thresh_lower, zscore_thresh_upper
 
+
 def substitute_yn_values(data_df: pd.DataFrame, col_names: list) -> pd.DataFrame:
     """Substitue the specified column Y, N values with 1,0
-    
+
     Args:
         data_df:
             Main DataFrame containing the 'Y' and 'N' values.
@@ -240,3 +242,42 @@ def substitute_yn_values(data_df: pd.DataFrame, col_names: list) -> pd.DataFrame
     for col in col_names:
         data_df[col] = data_df[col].replace({"Y": 1, "N": 0})
     return data_df
+
+
+def clean_organization_col(data_df: pd.DataFrame):
+    data_df["ORGANIZATION_TYPE"] = (
+        data_df["ORGANIZATION_TYPE"]
+        .apply(
+            lambda x: re.sub(r"(type|Type)\s+\d+", "", x, flags=re.IGNORECASE)
+            .replace(":", "")
+            .strip()
+        )
+        .value_counts()
+    )
+    return data_df
+
+
+def plot_hist_var_target(data_df: pd.DataFrame, col_name: str):
+    """Plot the Histogram of the column with distinct charts for TARGET values."""
+    sns.histplot(data_df, x=col_name, hue="TARGET", kde=True).set(
+        title=f"Chart of {col_name} based on TARGET values"
+    )
+    plt.show()
+    return
+
+def plot_box_var(data_df: pd.DataFrame, col_name: str, log_scale: bool = False):
+    sns.boxplot(
+        data_df,
+        x=col_name,
+        log_scale=log_scale,
+        notch=True,
+        flierprops={"marker": "x"},
+        width=0.3,
+    ).set(
+        title=f"BoxPlot for distribution of {col_name} values and log_scale: {log_scale}"
+    )
+    plt.show()
+
+    return
+
+    return
