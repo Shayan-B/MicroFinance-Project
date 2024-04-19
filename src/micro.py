@@ -27,6 +27,7 @@ from scipy import stats
 
 
 os.chdir("../")
+sns.set_theme(rc={'figure.figsize':(7,4)}, style="darkgrid")
 
 
 def read_parquet_file(file_name: str):
@@ -83,6 +84,7 @@ def select_numerical_variables(df: pd.DataFrame) -> pd.DataFrame:
         The DataFrame with only the Numerical columns.
     """
     numerical_dtypes = ["int32", "float32", "int64", "float64"]
+    df = df.drop(columns=["SK_ID_CURR", "TARGET"])
     numerical_df = df.select_dtypes(numerical_dtypes)
     numerical_columns = numerical_df.columns
 
@@ -198,7 +200,7 @@ def find_outliers(
 
 def compute_transform_zscore(data_df: pd.DataFrame, col_name: str):
     data_df[f"{col_name}_LOG"] = np.log(data_df[f"{col_name}"])
-    data_df[f"{col_name}_ZS"] = stats.zscore(data_df[f"{col_name}_LOG"])
+    data_df[f"{col_name}_ZS"] = stats.zscore(data_df[f"{col_name}_LOG"], nan_policy="omit")
 
     # Define COnditions for zscore filtering
     zscore_condition_upper = data_df[f"{col_name}_ZS"] <= 3
@@ -265,6 +267,7 @@ def plot_hist_var_target(data_df: pd.DataFrame, col_name: str):
     plt.show()
     return
 
+
 def plot_box_var(data_df: pd.DataFrame, col_name: str, log_scale: bool = False):
     sns.boxplot(
         data_df,
@@ -279,5 +282,27 @@ def plot_box_var(data_df: pd.DataFrame, col_name: str, log_scale: bool = False):
     plt.show()
 
     return
+
+
+def explore_var_vs_target(data_df: pd.DataFrame, col_name: str):
+    plot_box_var(data_df, col_name, log_scale=False)
+    plot_hist_var_target(data_df, col_name)
+    return
+
+def plot_var_zscore(data_df: pd.DataFrame, col_name: str, apply_log: bool):
+    plot_df = data_df.copy()
+    if apply_log:
+        plot_df.loc[:, col_name] = np.log(plot_df[col_name].values)
+    
+    plot_df.loc[:, col_name] = stats.zscore(plot_df[col_name], nan_policy="omit")
+
+    sns.histplot(
+        plot_df,
+        x=col_name,
+        hue="TARGET",
+        kde=True
+    )
+    plt.tight_layout()
+    plt.show()
 
     return
