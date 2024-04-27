@@ -27,7 +27,7 @@ from scipy import stats
 
 
 os.chdir("../")
-sns.set_theme(rc={'figure.figsize':(7,4)}, style="darkgrid")
+sns.set_theme(rc={"figure.figsize": (7, 4)}, style="darkgrid")
 
 
 def read_parquet_file(file_name: str):
@@ -199,8 +199,25 @@ def find_outliers(
 
 
 def compute_transform_zscore(data_df: pd.DataFrame, col_name: str):
+    """Compute the zscore of log-transform and replace outliers.
+    
+    Args:
+        data_df:
+            Main DataFrame containig data.
+        col_name:
+            Name of the column to apply the transformation.
+    """
+    stdscaler = StandardScaler()
     data_df[f"{col_name}_LOG"] = np.log(data_df[f"{col_name}"])
-    data_df[f"{col_name}_ZS"] = stats.zscore(data_df[f"{col_name}_LOG"], nan_policy="omit")
+    # data_df[f"{col_name}_ZS"] = stats.zscore(
+    #     data_df[f"{col_name}_LOG"], nan_policy="omit"
+    # )
+
+    data_df[f"{col_name}_ZS"] = stdscaler.fit_transform(
+        data_df[f"{col_name}_LOG"].values.reshape(-1,1)
+    )
+
+
 
     # Define COnditions for zscore filtering
     zscore_condition_upper = data_df[f"{col_name}_ZS"] <= 3
@@ -226,7 +243,12 @@ def compute_transform_zscore(data_df: pd.DataFrame, col_name: str):
     data_df.loc[replace_condition_upper, f"{col_name}_LOG"] = zscore_thresh_upper
     data_df.loc[replace_condition_lower, f"{col_name}_LOG"] = zscore_thresh_lower
 
-    return data_df, zscore_thresh_lower, zscore_thresh_upper
+    # Calculate the new zscore values based on LOG data
+    data_df[f"{col_name}_ZS"] = stdscaler.fit_transform(
+        data_df[f"{col_name}_LOG"].values.reshape(-1, 1)
+    )
+
+    return data_df, stdscaler
 
 
 def substitute_yn_values(data_df: pd.DataFrame, col_names: list) -> pd.DataFrame:
@@ -259,11 +281,11 @@ def clean_organization_col(data_df: pd.DataFrame):
     return data_df
 
 
-def plot_hist_var_target(data_df: pd.DataFrame, col_name: str):
+def plot_hist_var_target(data_df: pd.DataFrame, col_name: str, log_scale: bool = False):
     """Plot the Histogram of the column with distinct charts for TARGET values."""
-    sns.histplot(data_df, x=col_name, hue="TARGET", kde=True).set(
-        title=f"Chart of {col_name} based on TARGET values"
-    )
+    fig = sns.histplot(data_df, x=col_name, hue="TARGET", kde=True, log_scale=log_scale)
+    fig.set(title=f"Chart of {col_name} based on TARGET values")
+    fig.set_xlim(data_df[col_name].min(), data_df[col_name].max())
     plt.show()
     return
 
@@ -284,25 +306,54 @@ def plot_box_var(data_df: pd.DataFrame, col_name: str, log_scale: bool = False):
     return
 
 
-def explore_var_vs_target(data_df: pd.DataFrame, col_name: str):
-    plot_box_var(data_df, col_name, log_scale=False)
-    plot_hist_var_target(data_df, col_name)
+def explore_var_vs_target(data_df: pd.DataFrame, col_name: str, log_scale: bool = False):
+    """Plot Box and histogram chart of the data.
+
+    This function is mainly used to explore the given data for outliers and the type of
+    distribution they has.
+
+    Args:
+        data_df:
+            Main DataFrame containig data.
+        col_name:
+            Name of the column to pot.
+    """
+    plot_box_var(data_df, col_name, log_scale)
+    plot_hist_var_target(data_df, col_name, log_scale)
     return
 
-def plot_var_zscore(data_df: pd.DataFrame, col_name: str, apply_log: bool):
+
+def plot_var_zscore(data_df: pd.DataFrame, col_name: str, log_scale: bool):
+    """Plot the zscore transformation of the data.
+
+    Args:
+        data_df:
+            Main DataFrame containig data.
+        col_name:
+            Name of the column to plot.
+        log_scale:
+            if we should apply Log transformation or not.
+    """
     plot_df = data_df.copy()
-    if apply_log:
+    if log_scale:
         plot_df.loc[:, col_name] = np.log(plot_df[col_name].values)
-    
+
     plot_df.loc[:, col_name] = stats.zscore(plot_df[col_name], nan_policy="omit")
 
-    sns.histplot(
-        plot_df,
-        x=col_name,
-        hue="TARGET",
-        kde=True
+    fig = sns.histplot(plot_df, x=col_name, hue="TARGET", kde=True)
+    fig.set_title(
+        f"Disrtribution of Z-Transform of {col_name} based on target values, log_scale is {log_scale}"
     )
     plt.tight_layout()
     plt.show()
 
     return
+
+
+def transform_test_data_zscore(test_data: pd.DataFrame, col_name: str, apply_log: bool, std_scaler: StandardScaler):
+    array_values = test_data[col_name].values
+    if apply_log:
+        array_values = np.log(array_values)
+    std_values = std_scaler.transform(array_values.reshape(-1, 1))
+
+    return std_values
