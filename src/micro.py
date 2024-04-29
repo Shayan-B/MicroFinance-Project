@@ -283,27 +283,30 @@ def clean_organization_col(data_df: pd.DataFrame):
 
 def plot_hist_var_target(data_df: pd.DataFrame, col_name: str, log_scale: bool = False):
     """Plot the Histogram of the column with distinct charts for TARGET values."""
-    fig = sns.histplot(data_df, x=col_name, hue="TARGET", kde=True, log_scale=log_scale)
-    fig.set(title=f"Chart of {col_name} based on TARGET values")
-    fig.set_xlim(data_df[col_name].min(), data_df[col_name].max())
-    plt.show()
-    return
+    fig, hist_ax = plt.subplots()
+    hist_fig = sns.histplot(data_df, x=col_name, hue="TARGET", kde=True, log_scale=log_scale, ax=hist_ax)
+    hist_fig.set(title=f"Chart of {col_name} based on TARGET values")
+    hist_fig.set_xlim(data_df[col_name].min(), data_df[col_name].max())
+    
+    return fig
 
 
 def plot_box_var(data_df: pd.DataFrame, col_name: str, log_scale: bool = False):
-    sns.boxplot(
+    fig, box_ax = plt.subplots()
+    box_fig = sns.boxplot(
         data_df,
         x=col_name,
         log_scale=log_scale,
         notch=True,
         flierprops={"marker": "x"},
         width=0.3,
-    ).set(
+        ax=box_ax
+    )
+    box_ax.set(
         title=f"BoxPlot for distribution of {col_name} values and log_scale: {log_scale}"
     )
-    plt.show()
 
-    return
+    return fig
 
 
 def explore_var_vs_target(data_df: pd.DataFrame, col_name: str, log_scale: bool = False):
@@ -318,8 +321,12 @@ def explore_var_vs_target(data_df: pd.DataFrame, col_name: str, log_scale: bool 
         col_name:
             Name of the column to pot.
     """
-    plot_box_var(data_df, col_name, log_scale)
-    plot_hist_var_target(data_df, col_name, log_scale)
+
+    fig, ax = plt.subplots(ncols=1, nrows=2, figsize=(10, 10))
+    ax[0] = plot_box_var(data_df, col_name, log_scale)
+    ax[1] = plot_hist_var_target(data_df, col_name, log_scale)
+
+    plt.show()
     return
 
 
