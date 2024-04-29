@@ -200,7 +200,7 @@ def find_outliers(
 
 def compute_transform_zscore(data_df: pd.DataFrame, col_name: str):
     """Compute the zscore of log-transform and replace outliers.
-    
+
     Args:
         data_df:
             Main DataFrame containig data.
@@ -214,10 +214,8 @@ def compute_transform_zscore(data_df: pd.DataFrame, col_name: str):
     # )
 
     data_df[f"{col_name}_ZS"] = stdscaler.fit_transform(
-        data_df[f"{col_name}_LOG"].values.reshape(-1,1)
+        data_df[f"{col_name}_LOG"].values.reshape(-1, 1)
     )
-
-
 
     # Define COnditions for zscore filtering
     zscore_condition_upper = data_df[f"{col_name}_ZS"] <= 3
@@ -281,18 +279,24 @@ def clean_organization_col(data_df: pd.DataFrame):
     return data_df
 
 
-def plot_hist_var_target(data_df: pd.DataFrame, col_name: str, log_scale: bool = False):
+def plot_hist_var_target(
+    data_df: pd.DataFrame, col_name: str, log_scale: bool = False, axs=None
+):
     """Plot the Histogram of the column with distinct charts for TARGET values."""
-    fig, hist_ax = plt.subplots()
-    hist_fig = sns.histplot(data_df, x=col_name, hue="TARGET", kde=True, log_scale=log_scale, ax=hist_ax)
+    hist_fig = sns.histplot(
+        data_df, x=col_name, hue="TARGET", kde=True, log_scale=log_scale, ax=axs
+    )
     hist_fig.set(title=f"Chart of {col_name} based on TARGET values")
     hist_fig.set_xlim(data_df[col_name].min(), data_df[col_name].max())
-    
-    return fig
+
+    # plt.show()
+
+    return
 
 
-def plot_box_var(data_df: pd.DataFrame, col_name: str, log_scale: bool = False):
-    fig, box_ax = plt.subplots()
+def plot_box_var(
+    data_df: pd.DataFrame, col_name: str, log_scale: bool = False, axs=None
+):
     box_fig = sns.boxplot(
         data_df,
         x=col_name,
@@ -300,16 +304,19 @@ def plot_box_var(data_df: pd.DataFrame, col_name: str, log_scale: bool = False):
         notch=True,
         flierprops={"marker": "x"},
         width=0.3,
-        ax=box_ax
+        ax=axs,
     )
-    box_ax.set(
+    box_fig.set(
         title=f"BoxPlot for distribution of {col_name} values and log_scale: {log_scale}"
     )
+    if axs is None:
+        plt.show()
+    return
 
-    return fig
 
-
-def explore_var_vs_target(data_df: pd.DataFrame, col_name: str, log_scale: bool = False):
+def explore_var_vs_target(
+    data_df: pd.DataFrame, col_name: str, log_scale: bool = False
+):
     """Plot Box and histogram chart of the data.
 
     This function is mainly used to explore the given data for outliers and the type of
@@ -322,9 +329,9 @@ def explore_var_vs_target(data_df: pd.DataFrame, col_name: str, log_scale: bool 
             Name of the column to pot.
     """
 
-    fig, ax = plt.subplots(ncols=1, nrows=2, figsize=(10, 10))
-    ax[0] = plot_box_var(data_df, col_name, log_scale)
-    ax[1] = plot_hist_var_target(data_df, col_name, log_scale)
+    fig, ax = plt.subplots(ncols=2, nrows=1, figsize=(15, 4))
+    plot_box_var(data_df, col_name, log_scale, ax[0])
+    plot_hist_var_target(data_df, col_name, log_scale, ax[1])
 
     plt.show()
     return
@@ -357,7 +364,9 @@ def plot_var_zscore(data_df: pd.DataFrame, col_name: str, log_scale: bool):
     return
 
 
-def transform_test_data_zscore(test_data: pd.DataFrame, col_name: str, apply_log: bool, std_scaler: StandardScaler):
+def transform_test_data_zscore(
+    test_data: pd.DataFrame, col_name: str, apply_log: bool, std_scaler: StandardScaler
+):
     array_values = test_data[col_name].values
     if apply_log:
         array_values = np.log(array_values)
