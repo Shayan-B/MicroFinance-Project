@@ -3,6 +3,10 @@
 (Image Courtesy: DALL-E)
 
 
+<div align="center">
+    <img src="assets/img/Exploratory_data_anaysis.jpg" width="80%">
+</div>
+
 ## Overview
 
 In the new era of Finance field, by leveraging the power of data we are able to evaluate and find anomalies in different finance sub-sectors. Although these anomalies doesn't occur much but in this sensitive field, when they happen they put too much pressure on banks, credit companies, etc. 
