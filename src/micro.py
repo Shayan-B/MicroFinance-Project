@@ -33,7 +33,7 @@ sns.set_theme(rc={"figure.figsize": (7, 4)}, style="darkgrid")
 def read_parquet_file(file_name: str):
     """Read parquet files based on provided name."""
     parquet_file_path = os.path.join(
-        os.path.dirname(__file__), "..", "assets", f"{file_name}.parquet"
+        os.path.dirname(__file__), "..", "data", f"{file_name}.parquet"
     )
     # Read the Parquet file into a PyArrow Table
     table = pq.read_table(parquet_file_path)
