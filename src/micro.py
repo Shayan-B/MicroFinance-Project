@@ -165,7 +165,12 @@ def compute_corr_hist_plot(df: pd.DataFrame, col_list: list):
         col_list:
             List of columns to show the pair plot and compute correlation.
     """
-    sns.pairplot(df[col_list])
+    g = sns.pairplot(df[col_list])
+    for ax in g.axes.flat:
+        ax.set_xlabel(ax.get_xlabel(), fontsize=9)  # Set x-axis label size
+        ax.set_ylabel(ax.get_ylabel(), fontsize=9)  # Set y-axis label size
+        ax.tick_params(labelsize=9)  # Set tick label size for both axes
+
     plt.show()
     print(f"Correlation between {len(col_list)} variables: \n", df[col_list].corr())
 
@@ -174,8 +179,21 @@ def compute_corr_hist_plot(df: pd.DataFrame, col_list: list):
 
 def find_outliers(
     data_df: pd.DataFrame, col_name: str, outlier_type: str = None
-) -> pd.DataFrame:
-    """Find the outliers based on InterQuartile Range."""
+) -> tuple[pd.DataFrame, float, float]:
+    """Find the outliers based on InterQuartile Range.
+    
+    Args:
+        data_df:
+            The DataFrame containing the data.
+        col_name:
+            The name of the column to find the outliers.
+        outlier_type:
+            If we should find the upper or lower outliers of the data.
+
+    Returns:
+        A tuple containing the DataFRame of the outliers, and two float values containig the
+        values for Q1 and Q3.
+    """
     # Finding Quantiles
     Q1 = data_df[col_name].quantile(0.25)
     Q3 = data_df[col_name].quantile(0.75)
@@ -198,7 +216,9 @@ def find_outliers(
     return outliers, Q1, Q3
 
 
-def compute_transform_zscore(data_df: pd.DataFrame, col_name: str):
+def compute_transform_zscore(
+    data_df: pd.DataFrame, col_name: str
+) -> tuple[pd.DataFrame, StandardScaler]:
     """Compute the zscore of log-transform and replace outliers.
 
     Args:
@@ -206,12 +226,13 @@ def compute_transform_zscore(data_df: pd.DataFrame, col_name: str):
             Main DataFrame containig data.
         col_name:
             Name of the column to apply the transformation.
+
+    Returns:
+        A tuple containing the DataFrame of the transfomred values for the specified 'col_name' and
+        the StandardScaler fitted on the specified column.
     """
     stdscaler = StandardScaler()
     data_df[f"{col_name}_LOG"] = np.log(data_df[f"{col_name}"])
-    # data_df[f"{col_name}_ZS"] = stats.zscore(
-    #     data_df[f"{col_name}_LOG"], nan_policy="omit"
-    # )
 
     data_df[f"{col_name}_ZS"] = stdscaler.fit_transform(
         data_df[f"{col_name}_LOG"].values.reshape(-1, 1)
@@ -297,6 +318,18 @@ def plot_hist_var_target(
 def plot_box_var(
     data_df: pd.DataFrame, col_name: str, log_scale: bool = False, axs=None
 ):
+    """Plot the box chart.
+
+    Args:
+        data_df:
+            Main DatFrame containing all the data.
+        col_name:
+            The specified column name to plot.
+        log_scale:
+            If we should apply the Logarithmic scale or not.
+        axs:
+            Matplotlib axes object to plot the chart.
+    """
     box_fig = sns.boxplot(
         data_df,
         x=col_name,
@@ -327,10 +360,16 @@ def explore_var_vs_target(
             Main DataFrame containig data.
         col_name:
             Name of the column to pot.
+        log_scale:
+            If we should pply the logarithmic scale or not.
     """
-
+    # Initialize the plot
     fig, ax = plt.subplots(ncols=2, nrows=1, figsize=(15, 4))
+
+    # Add the Box plot
     plot_box_var(data_df, col_name, log_scale, ax[0])
+
+    # add the histogram plot
     plot_hist_var_target(data_df, col_name, log_scale, ax[1])
 
     plt.show()
@@ -366,7 +405,22 @@ def plot_var_zscore(data_df: pd.DataFrame, col_name: str, log_scale: bool):
 
 def transform_test_data_zscore(
     test_data: pd.DataFrame, col_name: str, apply_log: bool, std_scaler: StandardScaler
-):
+) -> np.ndarray:
+    """Transform the specified column to standard scale.
+
+    Args:
+        test_data:
+            Main DataFrame containing data.
+        col_name:
+            The name of the specified column to transform
+        apply_log:
+            If we should apply the log transformation or not.
+        std_scaler:
+            The standard scaler object fitted on the train data.
+
+    Returns:
+        Array containing the transformed values of the specified column.
+    """
     array_values = test_data[col_name].values
     if apply_log:
         array_values = np.log(array_values)
