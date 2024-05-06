@@ -181,7 +181,7 @@ def find_outliers(
     data_df: pd.DataFrame, col_name: str, outlier_type: str = None
 ) -> tuple[pd.DataFrame, float, float]:
     """Find the outliers based on InterQuartile Range.
-    
+
     Args:
         data_df:
             The DataFrame containing the data.
@@ -289,13 +289,12 @@ def substitute_yn_values(data_df: pd.DataFrame, col_names: list) -> pd.DataFrame
 
 def clean_organization_col(data_df: pd.DataFrame):
     data_df["ORGANIZATION_TYPE"] = (
-        data_df["ORGANIZATION_TYPE"]
-        .apply(
+        data_df["ORGANIZATION_TYPE"].apply(
             lambda x: re.sub(r"(type|Type)\s+\d+", "", x, flags=re.IGNORECASE)
             .replace(":", "")
             .strip()
         )
-        .value_counts()
+        # .value_counts()
     )
     return data_df
 
@@ -427,3 +426,55 @@ def transform_test_data_zscore(
     std_values = std_scaler.transform(array_values.reshape(-1, 1))
 
     return std_values
+
+
+def find_replace_array_size(df: pd.DataFrame, val_name: str):
+    # Replacing condition
+    replace_cond = (df["OCCUPATION_TYPE"].isna()) & (df["NAME_INCOME_TYPE"] == val_name)
+
+    # Length of replacing array
+    replace_len = df[replace_cond].shape[0]
+
+    return replace_cond, replace_len
+
+
+def replace_occupation_nan(
+    data_train: pd.DataFrame, data_test: pd.DataFrame, income_type_val: str
+):
+    working_occupation = data_train[
+        (data_train["NAME_INCOME_TYPE"] == income_type_val)
+    ]["OCCUPATION_TYPE"].value_counts(dropna=True, normalize=True)
+
+    # Use the values which are repeated more than 10% of the time
+    working_occupation = working_occupation[(working_occupation >= 0.1)]
+
+    # Normalize
+    working_occupation = working_occupation / sum(working_occupation)
+
+    replace_condition, replace_size = find_replace_array_size(
+        data_train, income_type_val
+    )
+
+    # Using the probabilities to egenrate random values
+    random_list = np.random.choice(
+        working_occupation.index.tolist(),
+        size=replace_size,
+        p=working_occupation.values,
+    ).tolist()
+
+    data_train.loc[replace_condition, "OCCUPATION_TYPE"] = random_list
+
+    # Apply the probabilities to the test data
+    replace_condition, replace_size = find_replace_array_size(
+        data_test, income_type_val
+    )
+
+    test_random_list = np.random.choice(
+        working_occupation.index.tolist(),
+        size=replace_size,
+        p=working_occupation.values,
+    ).tolist()
+
+    data_test.loc[replace_condition, "OCCUPATION_TYPE"] = test_random_list
+
+    return data_train, data_test
