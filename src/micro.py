@@ -478,3 +478,24 @@ def replace_occupation_nan(
     data_test.loc[replace_condition, "OCCUPATION_TYPE"] = test_random_list
 
     return data_train, data_test
+
+
+def find_low_na_cols(data_df: pd.DataFrame, na_thresh: float):
+    na_percent_values = data_df.isna().sum(axis=0) / data_df.shape[0] * 100
+    low_na_cols = (na_percent_values <= na_thresh) & (na_percent_values > 0)
+    # print(data_df.loc[:, low_na_cols].head(5))
+    print(data_df.loc[:, low_na_cols].isna().sum(axis=0) / len(data_df) * 100)
+
+    return
+
+
+def impute_na_cols(data_df: pd.DataFrame, select_cols: list):
+    knn_imputer = KNNImputer(n_neighbors=5)
+    impute_array = knn_imputer.fit_transform(data_df[select_cols])
+
+    sns.pairplot(pd.DataFrame(data=impute_array, columns=select_cols))
+    plt.show()
+
+    data_df.loc[:, select_cols] = impute_array
+
+    return data_df, knn_imputer
