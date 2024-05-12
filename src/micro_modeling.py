@@ -7,6 +7,10 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import cross_val_score
 from sklearn.metrics import roc_auc_score
 
+from imblearn.over_sampling import SMOTE
+from imblearn.under_sampling import RandomUnderSampler
+from imblearn.pipeline import Pipeline as imb_pipeline
+
 
 def split_train_data(
     data_df: pd.DataFrame, train_ratio: float
@@ -73,7 +77,7 @@ def evalue_model_crossval(model, X: np.ndarray, y: np.ndarray):
     return np.mean(scores)
 
 
-def evaluate_models(train_data: pd.DataFrame, models: list):
+def evaluate_models(X: np.ndarray, y: np.ndarray, models: list):
     """Evaluate the list of procided models with cross_val_scoring.
 
     Args:
@@ -89,11 +93,26 @@ def evaluate_models(train_data: pd.DataFrame, models: list):
     model_names = [m.__name__ for m in models]
     scores = None
 
-    X = train_data.drop(columns=["TARGET"]).values
-    y = train_data["TARGET"].values
+    # X = train_data.drop(columns=["TARGET"]).values
+    # y = train_data["TARGET"].values
 
     scores = [evalue_model_crossval(X, y, m) for m in models]
 
     model_scores = pd.DataFrame(data=scores, index=model_names)
 
     return model_scores
+
+
+def resample_train_data(X: np.ndarray, y: np.ndarray):
+    """Over and under sampling for the training set"""
+
+    over_sampler = SMOTE(sampling_strategy=0.1, random_state=42, k_neighbors=5)
+    under_sampler = RandomUnderSampler(sampling_strategy=0.7, random_state=42)
+
+    sampling_steps = [("Over", over_sampler), ("Under", under_sampler)]
+
+    pipline = imb_pipeline(sampling_steps)
+
+    X, y = pipline.fit_resample(X, y)
+
+    return X, y
