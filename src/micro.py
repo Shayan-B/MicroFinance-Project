@@ -4,6 +4,7 @@ import re
 import numpy as np  # linear algebra
 import pandas as pd  # data processing, CSV file I/O (e.g. pd.read_csv)
 
+import pyarrow as pa
 import pyarrow.parquet as pq
 
 import matplotlib.pyplot as plt
@@ -30,10 +31,10 @@ os.chdir("../")
 sns.set_theme(rc={"figure.figsize": (7, 4)}, style="darkgrid")
 
 
-def read_parquet_file(file_name: str):
+def read_parquet_file(dir_name:str, file_name: str):
     """Read parquet files based on provided name."""
     parquet_file_path = os.path.join(
-        os.path.dirname(__file__), "..", "data", f"{file_name}.parquet"
+        os.path.dirname(__file__), "..", "data", dir_name, f"{file_name}.parquet"
     )
     # Read the Parquet file into a PyArrow Table
     table = pq.read_table(parquet_file_path)
@@ -42,6 +43,23 @@ def read_parquet_file(file_name: str):
     df = table.to_pandas()
 
     return df
+
+def write_parquet_file(df: pd.DataFrame, dir_name: str, file_name: str):
+    """Write DataFrame to a Parquet file."""
+    # Construct the path to the Parquet file
+    parquet_file_path = os.path.join(
+        os.path.dirname(__file__), "..", "data", dir_name, f"{file_name}.parquet"
+    )
+    
+    # Convert DataFrame to PyArrow Table
+    table = pa.Table.from_pandas(df)
+    
+    # Write the PyArrow Table to Parquet
+    pq.write_table(table, parquet_file_path)
+
+    print(f"{file_name} has been Successfully written to parquet file in folder {dir_name}.")
+
+    return
 
 
 def ChangeType(df: pd.DataFrame, org_type: str, target_type: str) -> pd.DataFrame:
