@@ -31,7 +31,7 @@ os.chdir("../")
 sns.set_theme(rc={"figure.figsize": (7, 4)}, style="darkgrid")
 
 
-def read_parquet_file(dir_name:str, file_name: str):
+def read_parquet_file(dir_name: str, file_name: str):
     """Read parquet files based on provided name."""
     parquet_file_path = os.path.join(
         os.path.dirname(__file__), "..", "data", dir_name, f"{file_name}.parquet"
@@ -44,20 +44,23 @@ def read_parquet_file(dir_name:str, file_name: str):
 
     return df
 
+
 def write_parquet_file(df: pd.DataFrame, dir_name: str, file_name: str):
     """Write DataFrame to a Parquet file."""
     # Construct the path to the Parquet file
     parquet_file_path = os.path.join(
         os.path.dirname(__file__), "..", "data", dir_name, f"{file_name}.parquet"
     )
-    
+
     # Convert DataFrame to PyArrow Table
     table = pa.Table.from_pandas(df)
-    
+
     # Write the PyArrow Table to Parquet
     pq.write_table(table, parquet_file_path)
 
-    print(f"{file_name} has been Successfully written to parquet file in folder {dir_name}.")
+    print(
+        f"{file_name} has been Successfully written to parquet file in folder {dir_name}."
+    )
 
     return
 
@@ -498,11 +501,30 @@ def replace_occupation_nan(
     return data_train, data_test
 
 
-def find_low_na_cols(data_df: pd.DataFrame, na_thresh: float):
+def find_na_cols(data_df: pd.DataFrame, na_thresh: float = 30):
+    """
+
+    Args:
+        na_thresh:
+            Value threshold for selecting the na values, in percent
+    """
     na_percent_values = data_df.isna().sum(axis=0) / data_df.shape[0] * 100
-    low_na_cols = (na_percent_values <= na_thresh) & (na_percent_values > 0)
-    # print(data_df.loc[:, low_na_cols].head(5))
-    print(data_df.loc[:, low_na_cols].isna().sum(axis=0) / len(data_df) * 100)
+    na_cols = (na_percent_values <= na_thresh) & (na_percent_values > 0)
+
+    print(
+        data_df.loc[:, na_cols].isna().sum(axis=0).sort_values(ascending=False)
+        / len(data_df)
+        * 100,
+        "\n",
+    )
+
+    print("The information about the NA columns: \n")
+
+    # Capture DataFrame info as a string
+    info_string = data_df.loc[:, na_cols].info(memory_usage="deep", show_counts=True)
+
+    # Print the formatted string
+    print(info_string)
 
     return
 
@@ -517,3 +539,16 @@ def impute_na_cols(data_df: pd.DataFrame, select_cols: list):
     data_df.loc[:, select_cols] = impute_array
 
     return data_df, knn_imputer
+
+
+# def find_na_cols(data_df: pd.DataFrame):
+#     na_series = data_df.isna().sum()
+#     na_series = na_series[(na_series != 0)]
+#     na_cols = na_series.index
+
+#     # See the Null values from low to high
+#     print(na_series.sort_values(ascending=True))
+
+#     print("Number of Null columns: {}".format(len(na_series)))
+
+#     return

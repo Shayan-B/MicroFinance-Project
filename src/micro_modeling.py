@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
-
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import StratifiedKFold
@@ -10,6 +11,9 @@ from sklearn.metrics import roc_auc_score
 from imblearn.over_sampling import SMOTE
 from imblearn.under_sampling import RandomUnderSampler
 from imblearn.pipeline import Pipeline as imb_pipeline
+
+
+sns.set_theme(rc={"figure.figsize": (7, 4)}, style="darkgrid")
 
 
 def split_train_data(
@@ -77,7 +81,7 @@ def evalue_model_crossval(model, X: np.ndarray, y: np.ndarray):
     return np.mean(scores)
 
 
-def evaluate_models(X: np.ndarray, y: np.ndarray, models: list):
+def evaluate_models(X: np.ndarray, y: np.ndarray, models: list) -> pd.DataFrame:
     """Evaluate the list of procided models with cross_val_scoring.
 
     Args:
@@ -93,9 +97,6 @@ def evaluate_models(X: np.ndarray, y: np.ndarray, models: list):
     model_names = [m.__name__ for m in models]
     scores = None
 
-    # X = train_data.drop(columns=["TARGET"]).values
-    # y = train_data["TARGET"].values
-
     scores = [evalue_model_crossval(X, y, m) for m in models]
 
     model_scores = pd.DataFrame(data=scores, index=model_names)
@@ -106,13 +107,29 @@ def evaluate_models(X: np.ndarray, y: np.ndarray, models: list):
 def resample_train_data(X: np.ndarray, y: np.ndarray):
     """Over and under sampling for the training set"""
 
+    # Over sample the minority class
     over_sampler = SMOTE(sampling_strategy=0.1, random_state=42, k_neighbors=5)
+
+    # Under Sample the majority class
     under_sampler = RandomUnderSampler(sampling_strategy=0.7, random_state=42)
 
+    # Make the pipeline
     sampling_steps = [("Over", over_sampler), ("Under", under_sampler)]
-
     pipline = imb_pipeline(sampling_steps)
 
+    # Fit and resample the data
     X, y = pipline.fit_resample(X, y)
 
     return X, y
+
+
+def target_distribution_pie(target_data: np.ndarray, plt_title: str = None):
+    """Visualize the distribution of TARGET data."""
+
+    x_bins, counts = np.unique(target_data, return_counts=True)
+
+    g = sns.barplot(x=x_bins, y=counts, width=0.2)
+    g.set_title(plt_title)
+    plt.show()
+
+    return
