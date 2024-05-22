@@ -511,6 +511,8 @@ def find_na_cols(data_df: pd.DataFrame, na_thresh: float = 30):
     na_percent_values = data_df.isna().sum(axis=0) / data_df.shape[0] * 100
     na_cols = (na_percent_values <= na_thresh) & (na_percent_values > 0)
 
+    print("* The percentage of NA values in each column: \n")
+
     print(
         data_df.loc[:, na_cols].isna().sum(axis=0).sort_values(ascending=False)
         / len(data_df)
@@ -518,7 +520,7 @@ def find_na_cols(data_df: pd.DataFrame, na_thresh: float = 30):
         "\n",
     )
 
-    print("The information about the NA columns: \n")
+    print("* The information about the NA columns: \n")
 
     # Capture DataFrame info as a string
     info_string = data_df.loc[:, na_cols].info(memory_usage="deep", show_counts=True)
