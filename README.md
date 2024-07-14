@@ -1,4 +1,4 @@
-# Microfinance and Data Science
+# Microfinance and Data Science (Ongoing Project)
 ![image](https://github.com/Shayan-B/MicroFinance-Project/assets/32581929/6de4285e-dcf7-4fdf-84fe-ed274f422bb2)
 (Image Courtesy: DALL-E)
 
