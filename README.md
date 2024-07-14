@@ -20,7 +20,7 @@ If you have any difficulties openning the notebook in github you can find it in 
 This repository is licensed under the [MIT License](LICENSE). Feel free to use and modify the contents for educational and non-commercial purposes, with appropriate attribution.
 
 ## Contact
-For inquiries or feedback, please contact [shayanb2004@gmail.com](mailto:shayanb2004@gmail.com).
+For inquiries or feedback, please contact [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/shayan-bastani/).
 
 ---
 
