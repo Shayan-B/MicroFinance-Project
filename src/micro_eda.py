@@ -350,13 +350,28 @@ def find_na_cols(data_df: pd.DataFrame, na_thresh: float = 30):
 
     return
 
-def impute_na_cols(data_df: pd.DataFrame, select_cols: list):
+def impute_na_cols(data_df: pd.DataFrame, select_cols: list) -> tuple[pd.DataFrame, KNNImputer]:
+    """Calling a KNN Imputer on the selected columns.
+    
+    Args:
+        data_df:
+            The main DataFrame.
+        select_cols:
+            A list of columns which needs to be included in the Imputer.
+            
+    Returns:
+        Atuple containing the Imputed Data and the imputer fitted object.
+        """
+
+    # Initiate and fit the inputer to the selected columns
     knn_imputer = KNNImputer(n_neighbors=5)
     impute_array = knn_imputer.fit_transform(data_df[select_cols])
 
+    # Plot the imputed data
     sns.pairplot(pd.DataFrame(data=impute_array, columns=select_cols))
     plt.show()
 
+    # Replace the imputed data.
     data_df.loc[:, select_cols] = impute_array
 
     return data_df, knn_imputer
@@ -401,7 +416,7 @@ def compute_entire_correlation(df: pd.DataFrame, threshold: float = 0.7):
     # Find the Correlation matrix
     correlation_matrix = numerical_df.corr()
 
-    # use the Upper triangle matrix and create a DataFrame to find the names of the high correlated columns
+    # Use the Upper triangle matrix and create a DataFrame to find the names of the high correlated columns
     filtered_correlation_df = compute_triu_corr_df(correlation_matrix)
     total_list = []
 
