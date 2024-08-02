@@ -145,6 +145,7 @@ def explore_var_vs_target(
     plt.show()
     return
 
+
 def compute_transform_zscore(
     data_df: pd.DataFrame, col_name: str
 ) -> tuple[pd.DataFrame, StandardScaler]:
@@ -198,6 +199,7 @@ def compute_transform_zscore(
 
     return data_df, stdscaler
 
+
 def transform_test_data_zscore(
     test_data: pd.DataFrame, col_name: str, apply_log: bool, std_scaler: StandardScaler
 ) -> np.ndarray:
@@ -222,6 +224,7 @@ def transform_test_data_zscore(
     std_values = std_scaler.transform(array_values.reshape(-1, 1))
 
     return std_values
+
 
 def plot_var_zscore(data_df: pd.DataFrame, col_name: str, log_scale: bool):
     """Plot the zscore transformation of the data.
@@ -248,6 +251,7 @@ def plot_var_zscore(data_df: pd.DataFrame, col_name: str, log_scale: bool):
     plt.show()
 
     return
+
 
 def plot_car_histogram(df: pd.DataFrame, str_value: str):
     """Plot the histogram of 'OWN_CAR_AGE'."""
@@ -310,6 +314,7 @@ def replace_occupation_nan(
 
     return data_train, data_test
 
+
 def clean_organization_col(data_df: pd.DataFrame):
     data_df["ORGANIZATION_TYPE"] = (
         data_df["ORGANIZATION_TYPE"].apply(
@@ -320,6 +325,7 @@ def clean_organization_col(data_df: pd.DataFrame):
         # .value_counts()
     )
     return data_df
+
 
 def find_na_cols(data_df: pd.DataFrame, na_thresh: float = 30):
     """
@@ -350,18 +356,21 @@ def find_na_cols(data_df: pd.DataFrame, na_thresh: float = 30):
 
     return
 
-def impute_na_cols(data_df: pd.DataFrame, select_cols: list) -> tuple[pd.DataFrame, KNNImputer]:
+
+def impute_na_cols(
+    data_df: pd.DataFrame, select_cols: list
+) -> tuple[pd.DataFrame, KNNImputer]:
     """Calling a KNN Imputer on the selected columns.
-    
+
     Args:
         data_df:
             The main DataFrame.
         select_cols:
             A list of columns which needs to be included in the Imputer.
-            
+
     Returns:
         Atuple containing the Imputed Data and the imputer fitted object.
-        """
+    """
 
     # Initiate and fit the inputer to the selected columns
     knn_imputer = KNNImputer(n_neighbors=5)
@@ -375,6 +384,7 @@ def impute_na_cols(data_df: pd.DataFrame, select_cols: list) -> tuple[pd.DataFra
     data_df.loc[:, select_cols] = impute_array
 
     return data_df, knn_imputer
+
 
 def compute_triu_corr_df(corr_matrix: pd.DataFrame) -> pd.DataFrame:
     """Compute the Upper triangle of the correlation DataFrame.
@@ -398,6 +408,7 @@ def compute_triu_corr_df(corr_matrix: pd.DataFrame) -> pd.DataFrame:
     )
 
     return filtered_corr_df
+
 
 def compute_entire_correlation(df: pd.DataFrame, threshold: float = 0.7):
     """Find the columns which have high correlation with each other.
@@ -437,6 +448,7 @@ def compute_entire_correlation(df: pd.DataFrame, threshold: float = 0.7):
 
     return
 
+
 def compute_corr_hist_plot(df: pd.DataFrame, col_list: list):
     """Plot pair wise and show the correlation matrix for specified columns.
 
@@ -456,3 +468,47 @@ def compute_corr_hist_plot(df: pd.DataFrame, col_list: list):
     print(f"Correlation between {len(col_list)} variables: \n", df[col_list].corr())
 
     return
+
+
+def onehot_conv(
+    data_df: pd.DataFrame, test_data: pd.DataFrame, col_name: str
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Convert the specified column with onehot encoder.
+
+    Args:
+        data_df:
+            The specified DataFrame with categorical variables.
+        test_data:
+            DataFrame of the test data provided.
+        col_name:
+            The name of the column in DataFrame which has catgeorical values.
+
+    Returns:
+        A tuple containing the transformed DataFrames of train and test data.
+    """
+    encoder = OneHotEncoder(handle_unknown="infrequent_if_exist")
+    simp_imp = SimpleImputer(strategy="most_frequent")
+
+    array = simp_imp.fit_transform(
+        data_df[col_name].to_numpy()[..., np.newaxis]
+    ).ravel()
+    test_array = simp_imp.transform(
+        test_data[col_name].to_numpy()[..., np.newaxis]
+    ).ravel()
+
+    unique_vals = np.unique(array)
+
+    oneh_names = [f"{col_name}_{u}" for u in unique_vals]
+
+    data_df[oneh_names] = (
+        encoder.fit_transform(array.reshape(-1, 1)).toarray().astype(np.int8)
+    )
+
+    test_data[oneh_names] = (
+        encoder.transform(test_array.reshape(-1, 1)).toarray().astype(np.int8)
+    )
+
+    data_df = data_df.drop(columns=[col_name])
+    test_data = test_data.drop(columns=[col_name])
+
+    return data_df, test_data
