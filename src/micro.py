@@ -543,6 +543,20 @@ def impute_na_cols(data_df: pd.DataFrame, select_cols: list):
     return data_df, knn_imputer
 
 
+def find_object_cols(data_df: pd.DataFrame) -> list:
+    object_cols = data_df.select_dtypes("object").columns.tolist()
+    return object_cols
+
+def one_hot_object_cols(train_data: pd.DataFrame, test_data: pd.DataFrame) -> pd.DataFrame:
+
+    # Find object cols for one hot encoder
+    obj_cols = find_object_cols(train_data)
+
+    # Define and train Encoder
+    onehot_enc = OneHotEncoder(handle_unknown='infrequent_if_exist')
+    
+
+
 # def find_na_cols(data_df: pd.DataFrame):
 #     na_series = data_df.isna().sum()
 #     na_series = na_series[(na_series != 0)]
