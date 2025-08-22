@@ -543,17 +543,34 @@ def impute_na_cols(data_df: pd.DataFrame, select_cols: list):
     return data_df, knn_imputer
 
 
-def find_object_cols(data_df: pd.DataFrame) -> list:
-    object_cols = data_df.select_dtypes("object").columns.tolist()
-    return object_cols
-
 def one_hot_object_cols(train_data: pd.DataFrame, test_data: pd.DataFrame) -> pd.DataFrame:
 
-    # Find object cols for one hot encoder
-    obj_cols = find_object_cols(train_data)
+    object_cols = [
+        "NAME_INCOME_TYPE",
+        "NAME_FAMILY_STATUS",
+        "NAME_HOUSING_TYPE",
+        "OCCUPATION_TYPE",
+        "WEEKDAY_APPR_PROCESS_START",
+        "ORGANIZATION_TYPE",
+    ]
+    onehot_enc = OneHotEncoder(handle_unknown="infrequent_if_exist")
+    onehot_enc.fit(train_data[object_cols])
 
-    # Define and train Encoder
-    onehot_enc = OneHotEncoder(handle_unknown='infrequent_if_exist')
+    # Build the name of new columns
+    category_list = []
+    for cat_lst in onehot_enc.categories_:
+        for itm in cat_lst.tolist():
+            category_list.append(itm)
+
+    # Transform both train and test
+    train_data.loc[:, category_list] = onehot_enc.transform(train_data[object_cols]).toarray()
+    test_data.loc[:, category_list] = onehot_enc.transform(test_data[object_cols]).toarray()
+
+    # Drop the nunneeded columns
+    train_data = train_data.drop(columns=object_cols)
+    test_data = test_data.drop(columns=object_cols)
+
+    return train_data, test_data
     
 
 
