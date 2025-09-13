@@ -1,3 +1,5 @@
+import optuna
+
 import pandas as pd
 import numpy as np
 import seaborn as sns
@@ -7,11 +9,16 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import cross_val_score
 from sklearn.metrics import roc_auc_score
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
 
 from imblearn.over_sampling import SMOTE
 from imblearn.under_sampling import RandomUnderSampler
 from imblearn.pipeline import Pipeline as imb_pipeline
 
+from functools import partial
+
+from IPython.display import clear_output
 
 sns.set_theme(rc={"figure.figsize": (7, 4)}, style="darkgrid")
 
@@ -68,8 +75,8 @@ def custom_roc_auc_scorer(estimator, X: np.ndarray, y: np.ndarray) -> float:
     return roc_auc_score(y, y_pred_proba)
 
 
-def evaluate_model_crossval(model, X: np.ndarray, y: np.ndarray):
-    """train the model with cross_val_score and return the roc-auc score"""
+def evaluate_model_crossval(model, X: np.ndarray, y: np.ndarray) -> float:
+    """train the model with cross_val_score and return the mean roc-auc score"""
 
     # Define the stratified strategy for KFold
     kfold = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
@@ -132,3 +139,88 @@ def target_distribution_pie(target_data: np.ndarray, plt_title: str = None):
     plt.show()
 
     return
+
+
+def make_tree_objective(loc_trial):
+    tree_max_depth = loc_trial.suggest_int("max_depth", 2, 15, step=1)
+    tree_crit = loc_trial.suggest_categorical("criterion", ["gini", "entropy"])
+    tree_min_samples_split = loc_trial.suggest_int("min_samples_split", 2, 10, step=1)
+    tree_ccp_alpha = loc_trial.suggest_float("ccp_alpha", 0, 0.2, step=0.01)
+    tree_min_samples_leaf = loc_trial.suggest_int("min_samples_leaf", 1, 5)
+
+    classifier_obj = DecisionTreeClassifier(
+        class_weight="balanced",
+        max_depth=tree_max_depth,
+        criterion=tree_crit,
+        min_samples_split=tree_min_samples_split,
+        ccp_alpha=tree_ccp_alpha,
+        min_samples_leaf=tree_min_samples_leaf,
+    )
+    return classifier_obj
+
+
+def make_forest_objective(loc_trial):
+    rf_max_depth = loc_trial.suggest_int("max_depth", 2, 15, step=1)
+    rf_estimator = loc_trial.suggest_int("n_estimators", 10, 500, step=10)
+    rf_crit = loc_trial.suggest_categorical("criterion", ["gini", "entropy"])
+    rf_min_samples_split = loc_trial.suggest_int("min_samples_split", 2, 25, step=1)
+    rf_ccp_alpha = loc_trial.suggest_float("ccp_alpha", 0, 0.2, step=0.01)
+    rf_min_samples_leaf = loc_trial.suggest_int("min_samples_leaf", 2, 15)
+
+    classifier_obj = RandomForestClassifier(
+        class_weight="balanced",
+        max_depth=rf_max_depth,
+        n_estimators=rf_estimator,
+        criterion=rf_crit,
+        min_samples_split=rf_min_samples_split,
+        ccp_alpha=rf_ccp_alpha,
+        min_samples_leaf=rf_min_samples_leaf,
+    )
+
+    return classifier_obj
+
+
+def tune_hyperparam(
+    trial,
+    train_x: np.ndarray,
+    train_y: np.ndarray,
+    test_x: np.ndarray,
+    test_y: np.ndarray,
+    model_name: str = "DecisionTree",
+):
+    if model_name == "DecisionTree":
+        objective_func = make_tree_objective(trial)
+    elif model_name == "RandomForest":
+        objective_func = make_forest_objective(trial)
+
+    objective_func.fit(train_x, train_y)
+    # Define the stratified strategy for KFold
+    kfold = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+
+    # Get the scores
+    scores = cross_val_score(
+        objective_func, test_x, test_y, cv=kfold, scoring=custom_roc_auc_scorer
+    )
+
+    return np.mean(scores)
+
+
+def hyperparam_study(x_train, x_test, y_train, y_test):
+    model_names = ["RandomForest", "DecisionTree"]
+    for name in model_names:
+        print("###########---------------##########")
+        print(f"Now trying to Optimize {name} model:")
+
+        objective = partial(
+            tune_hyperparam,
+            model_name=name,
+            train_x=x_train,
+            train_y=y_train,
+            test_x=x_test,
+            test_y=y_test,
+        )
+
+        study = optuna.create_study(direction="maximize")
+        study.optimize(objective, n_trials=100)
+
+        print(f"For the {name} model best params are: \n",study.best_params)
