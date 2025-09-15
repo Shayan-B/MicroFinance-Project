@@ -11,6 +11,8 @@ from sklearn.model_selection import cross_val_score
 from sklearn.metrics import roc_auc_score
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import ConfusionMatrixDisplay
 
 from imblearn.over_sampling import SMOTE
 from imblearn.under_sampling import RandomUnderSampler
@@ -223,4 +225,13 @@ def hyperparam_study(x_train, x_test, y_train, y_test):
         study = optuna.create_study(direction="maximize")
         study.optimize(objective, n_trials=100)
 
-        print(f"For the {name} model best params are: \n",study.best_params)
+        print(f"For the {name} model best params are: \n", study.best_params)
+
+
+def train_validate_model(model, x_train, x_test, y_train, y_test):
+    model.fit(x_train, y_train)
+    y_pred = model.predict(x_test)
+    print(confusion_matrix(y_test, y_pred))
+    ConfusionMatrixDisplay.from_predictions(y_test, y_pred)
+
+    return
